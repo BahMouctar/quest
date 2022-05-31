@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateQuestSubjectInput } from './dto/createQuestSubjectInput.dto';
 import { UpdateQuestSubjectInput } from './dto/updateQuestSubjectInput.dto';
 import { QuestSubjects } from './entities/questSubjects.entity';
+import { TypeOrmHttpParamQuery } from '../../core/shared/classes/typeorm-query';
 
 @Injectable()
 export class QuestSubjectsService {
@@ -50,6 +51,39 @@ export class QuestSubjectsService {
         questSubject._id = _id;
 
         return questSubject;
-       
+    }
+
+    async save(questSubject: QuestSubjects): Promise<any>{
+        try{
+            return await this.questSubjectsRepository.save(questSubject);
+        }
+        catch(err){
+            return Promise.reject(null);
+        }
+    }
+    
+    async updateQuestSubject(questSubject: QuestSubjects, primaryKey: string): Promise<any>{
+        try{
+            const response: any = await this.findById(primaryKey);
+            return await this.questSubjectsRepository.save({ ...response.data, ...questSubject });
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+    
+    async delete(primaryKey: string): Promise<any>{
+        try{
+            return await this.questSubjectsRepository.softDelete(primaryKey);
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+
+    async findAll(query: Object): Promise<any> {
+       return await this.questSubjectsRepository.find(TypeOrmHttpParamQuery(query));
+    }
+
+    async findByIdQuestSubject(primaryKey: string): Promise<any> {
+       return  await this.questSubjectsRepository.findOne(primaryKey,{where:{deleted_at:IsNull()}, relations: ["quest","subject","questSubjectLanguages"] });
     }
 }

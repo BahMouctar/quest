@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateVersionInput } from './dto/createVersionInput.dto';
 import { UpdateVersionInput } from './dto/updateVersionInput.dto';
 import { Versions } from './entities/versions.entity';
+import { TypeOrmHttpParamQuery } from '../../core/shared/classes/typeorm-query';
 
 @Injectable()
 export class VersionsService {
@@ -49,6 +50,39 @@ export class VersionsService {
         version._id = _id;
 
         return version;
-       
+    }
+
+    async save(version: Object): Promise<any>{
+        try{
+            return await this.versionsRepository.save(version as Versions);
+        }
+        catch(err){
+            return Promise.reject(null);
+        }
+    }
+    
+    async updateVersion(version: Object, primaryKey: string): Promise<any>{
+        try{
+            const response: any = await this.findById(primaryKey);
+            return await this.versionsRepository.save({ ...response.data, ...version });
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+    
+    async delete(primaryKey: string): Promise<any>{
+        try{
+            return await this.versionsRepository.softDelete(primaryKey);
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+
+    async findAll(query: Object): Promise<any> {
+       return await this.versionsRepository.find(TypeOrmHttpParamQuery(query));
+    }
+
+    async findByIdVersion(primaryKey: string): Promise<any> {
+       return  await this.versionsRepository.findOne(primaryKey,{where:{deleted_at:IsNull()}, relations: ["language"] });
     }
 }

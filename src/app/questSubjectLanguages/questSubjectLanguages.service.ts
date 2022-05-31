@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateQuestSubjectLanguageInput } from './dto/createQuestSubjectLanguageInput.dto';
 import { UpdateQuestSubjectLanguageInput } from './dto/updateQuestSubjectLanguageInput.dto';
 import { QuestSubjectLanguages } from './entities/questSubjectLanguages.entity';
+import { TypeOrmHttpParamQuery } from '../../core/shared/classes/typeorm-query';
 
 @Injectable()
 export class QuestSubjectLanguagesService {
@@ -50,6 +51,39 @@ export class QuestSubjectLanguagesService {
         questSubjectLanguage._id = _id;
 
         return questSubjectLanguage;
-       
+    }
+
+    async save(questSubjectLanguage: QuestSubjectLanguages): Promise<any>{
+        try{
+            return await this.questSubjectLanguagesRepository.save(questSubjectLanguage);
+        }
+        catch(err){
+            return Promise.reject(null);
+        }
+    }
+    
+    async updateQuestSubjectLanguage(questSubjectLanguage: QuestSubjectLanguages, primaryKey: string): Promise<any>{
+        try{
+            const response: any = await this.findByIdQuestSubjectLanguage(primaryKey);
+            return await this.questSubjectLanguagesRepository.save({ ...response.data, ...questSubjectLanguage });
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+    
+    async delete(primaryKey: string): Promise<any>{
+        try{
+            return await this.questSubjectLanguagesRepository.softDelete(primaryKey);
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+
+    async findAll(query: Object): Promise<any> {
+       return await this.questSubjectLanguagesRepository.find(TypeOrmHttpParamQuery(query));
+    }
+
+    async findByIdQuestSubjectLanguage(primaryKey: string): Promise<any> {
+       return  await this.questSubjectLanguagesRepository.findOne(primaryKey,{where:{deleted_at:IsNull()}, relations: ["questSubject","languages"] });
     }
 }

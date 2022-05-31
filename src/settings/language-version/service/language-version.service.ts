@@ -1,11 +1,10 @@
 
 import { Injectable } from '@nestjs/common';
-import { first } from 'rxjs';
 import { Languages } from 'src/app/languages/entities/languages.entity';
 import { LanguagesService } from 'src/app/languages/languages.service';
 import { Versions } from 'src/app/versions/entities/versions.entity';
 import { VersionsService } from 'src/app/versions/versions.service';
-import { results } from 'src/core/shared/functions/function';
+import { first, results } from 'src/core/shared/functions/function';
 import { isArray, isNull } from 'util';
 import { LANGUAGE_VERSIONS } from '../../../../app.constant';
 
@@ -22,14 +21,14 @@ export class LanguageVersionService {
     //Enregistrer un objet "Language"(3)
     private saveLanguage = async  (language : Languages): Promise<any> => {
         //Rechercher le language-service selon le code
-        let response = await this.languageService.findOne({ label : language.label });
+        let response = await this.languageService.findAll({ label : language.label });
         //Retourner le premier objet "language" 
-        let $language: Languages|any =  first(response as any);
+        let $language: Languages =  first(response);
         if (isNull($language)) {
-            response = await this.languageService.create(language as any) as any;
+            response = await this.languageService.save(language);
         }
         else{
-            response = await this.languageService.update({...language, ...$language }, <any>language._id) as any;
+            response = await this.languageService.updateLanguage({...language, ...$language }, <any>language._id);
         }
         //Retourner l'objet "language" passer en paramètre
         $language =  results(response);
@@ -39,14 +38,14 @@ export class LanguageVersionService {
     //Enregistrer un objet "Version"(4)
     private saveVersion = async (version : Versions): Promise<any> => {
         //Rechercher la "version" selon le code
-        let response = await this.versionService.findOne({ label : version.label });
+        let response = await this.versionService.findAll({ label : version.label });
         //Retourner le premier objet 
-        let $version: Versions|any =  first(response as any);
+        let $version: Versions =  first(response);
         if (isNull($version)) {
-            response = await this.versionService.create(version as any) as any;
+            response = await this.versionService.save(version);
         }
         else{
-            response = await this.versionService.update({...version, ...$version }, <any>version._id) as any;
+            response = await this.versionService.updateVersion({...version, ...$version }, <any>version._id);
         }
         //Retourner l'objet "version" passer en paramètre
         $version =  results(response);

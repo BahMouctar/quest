@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateLanguageInput } from './dto/createLanguageInput.dto';
 import { UpdateLanguageInput } from './dto/updateLanguageInput.dto';
 import { Languages } from './entities/languages.entity';
+import { TypeOrmHttpParamQuery } from '../../core/shared/classes/typeorm-query';
 
 @Injectable()
 export class LanguagesService {
@@ -11,8 +12,12 @@ export class LanguagesService {
 
 
     async create(createLanguageInput : CreateLanguageInput) : Promise<Languages | undefined>{
-        const language = await this.languagesRepository.create(createLanguageInput);
-        return await this.languagesRepository.save(language);
+        try{
+            const language = await this.languagesRepository.create(createLanguageInput);
+            return await this.languagesRepository.save(language);
+        }catch(err){
+            return Promise.reject(null);
+        }
     }
 
 
@@ -51,5 +56,39 @@ export class LanguagesService {
 
         return language;
        
+    }
+
+    async save(language: Object): Promise<any>{
+        try{
+            return await this.languagesRepository.save(language as Languages);
+        }
+        catch(err){
+            return Promise.reject(null);
+        }
+    }
+    
+    async updateLanguage(language: Object, primaryKey: string): Promise<any>{
+        try{
+            const response: any = await this.findByIdLanguage(primaryKey);
+            return await this.languagesRepository.save({ ...response.data, ...language });
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+    
+    async delete(primaryKey: string): Promise<any>{
+        try{
+            return await this.languagesRepository.softDelete(primaryKey);
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+
+    async findAll(query: Object): Promise<any> {
+       return await this.languagesRepository.find(TypeOrmHttpParamQuery(query));
+    }
+
+    async findByIdLanguage(primaryKey: string): Promise<any> {
+       return  await this.languagesRepository.findOne(primaryKey,{where:{deleted_at:IsNull()}, relations: ["quest","versions","questSubjectLanguages"] });
     }
 }

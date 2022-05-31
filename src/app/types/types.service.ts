@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateTypeInput } from './dto/createTypeInput.dto';
 import { UpdateTypeInput } from './dto/updateTypeInput.dto';
 import { Types } from './entities/types.entity';
+import { TypeOrmHttpParamQuery } from '../../core/shared/classes/typeorm-query';
 
 @Injectable()
 export class TypesService {
@@ -49,7 +50,40 @@ export class TypesService {
 
         type._id = _id;
 
-        return type;
-       
+        return type; 
+    }
+
+    async save(type: Types): Promise<any>{
+        try{
+            return await this.typesRepository.save(type);
+        }
+        catch(err){
+            return Promise.reject(null);
+        }
+    }
+    
+    async updateType(type: Types, primaryKey: string): Promise<any>{
+        try{
+            const response: any = await this.findById(primaryKey);
+            return await this.typesRepository.save({ ...response.data, ...type });
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+    
+    async delete(primaryKey: string): Promise<any>{
+        try{
+            return await this.typesRepository.softDelete(primaryKey);
+        }catch(err){
+            return Promise.resolve(null);
+        }
+    }
+
+    async findAll(query: Object): Promise<any> {
+       return await this.typesRepository.find(TypeOrmHttpParamQuery(query));
+    }
+
+    async findByIdType(primaryKey: string): Promise<any> {
+       return  await this.typesRepository.findOne(primaryKey,{where:{deleted_at:IsNull()}, relations: ["inputs"] });
     }
 }
